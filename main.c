@@ -49,7 +49,7 @@
             cycle = 0;
             
             int i;
-            for( i = 0 ; i < 20 ; i++ ){ 
+            for( i = 1 ; i < 20 ; i++ ){ 
                 
                 queue[i] = -1;//same as above
             }   
@@ -69,7 +69,7 @@
             pthread_cond_destroy(&condl);
             pthread_cond_destroy(&conde);
             pthread_mutex_destroy(&mutex);
-
+            
             pthread_exit(NULL);
 //            
 //            
@@ -189,9 +189,11 @@
                 restroom_occupants--;
 
             if( restroom_occupants == 0 ){
+                
                 sig = 0;
                 check_queue();
             } 
+            
                 print_status();
             
         }
@@ -201,10 +203,11 @@
             if((array)[0] == 'q'){
                 (array)[queue_pos] = gender; // 0 or 1
 
-                if((queue_pos - 1) >= 0)
+                if((queue_pos - 1) > 1)
                     queue_pos--;
             } else {
-                (array)[queue_pos--] = gender;
+                if((queue_pos - 1) > 1)
+                    (array)[--queue_pos] = gender;
                 
             }
 
@@ -239,7 +242,7 @@
             do{
 
                 next = queue[19]; // next individual in queue
-
+                printf("sig: %d", sig);
                 if(sig == 0){
                     next == 0 ? woman_wants_to_enter() : man_wants_to_enter();
                 } else if(sig == 1){
@@ -249,18 +252,20 @@
                 } else {
                     if(next == 1){
                         man_wants_to_enter();
+                        printf("sig: %d", sig);
                     }
                 }
 
                 /* update queue, simulating FIFO pop procedure*/
                 int i;
-                for(i = 19; i > 1; i--){
+                for(i = 19; i > 0; i--){
                     queue[i] = queue[i - 1];
 
                 }
                 queue_pos++;
                 
             }while( queue[19] == next );
+            
         }
 
         void print_status(void){
@@ -277,7 +282,8 @@
                 printf("Male(s)\n");
             else
                 printf("\n");
-            printf("Cycle: %d", cycle++);
+            printf("Cycle: %d ", cycle++);
+           
             //guest_loader(NULL);
             printf("---------------------------------------------------------->|\n\n");
             
@@ -287,8 +293,9 @@
        
             int i;
                 
-                for(i = 0; i < 40; i++){
+                for(i = 0; i < 20; i++){
                     
+                    fflush( stdout);
                     int gender = (rand() % 100) + 1;
                     
                     pthread_mutex_lock(&mutex);
@@ -320,22 +327,27 @@
 
             int j;
             
-                for(j = 0; j < 40; j++){
+                for(j = 0; j < 20; j++){
                     sleep(1);
+                    printf("left\n");
                     pthread_mutex_lock(&mutex);
                     //sleep(10);
-                    if(restroom_occupants == 0)
+                    if(sig == 0)
                         pthread_cond_wait(&conde, &mutex);
-                    else if(sig == 1)
-                        woman_leaves();
-                    else
+                    else if (sig == 1){
+                        printf("woman_leaves()\n");
+                        woman_leaves();                        
+                    }else{              
+                        printf("man_leaves()\n");
                         man_leaves();
+                    }
+                        
                     pthread_cond_signal(&condl);
                     
                     pthread_mutex_unlock(&mutex);
                 }
 
-
+            
             
             pthread_exit(0);
 
