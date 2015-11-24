@@ -9,6 +9,7 @@
         #include <stdlib.h>
         #include <time.h>
         #include <pthread.h>
+        #include <stdbool.h>
         /*
          * 
          */
@@ -36,7 +37,7 @@
             semaphore restroom_occupants; //analogous to shared memory location
             int queue[20]; // 0 == female, 1 == male
             int cycle;
-
+            bool complete;
         int main(int argc, char** argv) {
             void* s_return;
             void* t_return;
@@ -47,6 +48,7 @@
             restroom_occupants = 0;
             queue[0] = 'q'; 
             cycle = 0;
+            complete = false;
             
             int i;
             for( i = 1 ; i < 20 ; i++ ){ 
@@ -139,9 +141,10 @@
         }
 
         void man_wants_to_enter(void){
-
+            
+            cycle++;
             //check_queue();
-
+            print_status();
             if( sig == 1 ){
                 add(queue, 1);
             } else {
@@ -150,14 +153,14 @@
 
             }
             
-                print_status();
+                
 
         }
 
         void woman_wants_to_enter(void){
 
-
-
+            cycle++;
+            print_status();
             if( sig == 2 ){
                 add(queue, 0); // add to queue
             } else {
@@ -166,35 +169,38 @@
 
             }
             
-                print_status();
+               
 
         }
 
         void man_leaves(void){
-
+            cycle++;
+            print_status();
+            
             if(restroom_occupants > 0)
                 restroom_occupants--;
-
+            
             if( restroom_occupants == 0){
                 sig = 0;
                 check_queue();
             }
             
-            print_status();
+                
         }
 
         void woman_leaves(void){
-
+            cycle++;
+            print_status();
+            
             if(restroom_occupants > 0)
                 restroom_occupants--;
-
-            if( restroom_occupants == 0 ){
-                
+           
+            if( restroom_occupants == 0 ){                
                 sig = 0;
                 check_queue();
             } 
             
-                print_status();
+                
             
         }
 
@@ -207,14 +213,14 @@
                     queue_pos--;
             } else {
                 if((queue_pos - 1) > 1)
-                    (array)[--queue_pos] = gender;
+                    (array)[queue_pos--] = gender;
                 
             }
 
         }
 
         void enter_restroom(){
-
+            
             restroom_occupants++;
             
         }
@@ -238,21 +244,26 @@
 
         void check_queue(void){
             int next;
-
+            
             do{
-
+                cycle++;
                 next = queue[19]; // next individual in queue
-                printf("sig: %d", sig);
+                
                 if(sig == 0){
-                    next == 0 ? woman_wants_to_enter() : man_wants_to_enter();
+                    if(!complete){                   
+                        next == 0 ? woman_wants_to_enter() : man_wants_to_enter();
+                      
+                    }
+                    
                 } else if(sig == 1){
-                    if(next == 0){
+                    if(next == 0){                        
                         woman_wants_to_enter();
+                        
                     }
                 } else {
                     if(next == 1){
                         man_wants_to_enter();
-                        printf("sig: %d", sig);
+                        
                     }
                 }
 
@@ -265,7 +276,7 @@
                 queue_pos++;
                 
             }while( queue[19] == next );
-            
+            printf("sig %d", sig);
         }
 
         void print_status(void){
@@ -282,7 +293,7 @@
                 printf("Male(s)\n");
             else
                 printf("\n");
-            printf("Cycle: %d ", cycle++);
+            printf("Cycle: %d ", cycle);
            
             //guest_loader(NULL);
             printf("---------------------------------------------------------->|\n\n");
@@ -295,20 +306,22 @@
                 
                 for(i = 0; i < 20; i++){
                     
-                    fflush( stdout);
+                    
                     int gender = (rand() % 100) + 1;
                     
                     pthread_mutex_lock(&mutex);
-                    //sleep(10);
+                    
                     while(restroom_occupants == 20){
                         pthread_cond_wait(&condl, &mutex);                
                     }
                     
-                    if(gender < 50)
+                    if(gender < 50){                        
                         man_wants_to_enter();
-                    else 
+                        printf("Man wants to enter\n");
+                    }else{                        
                         woman_wants_to_enter();
-
+                        printf("Woman wants to enter\n");
+                    }
                     pthread_cond_signal(&conde);
                                        
                     pthread_mutex_unlock(&mutex);
@@ -316,7 +329,6 @@
 
 
             
-           
             pthread_exit(0);
 
             return NULL;
@@ -328,18 +340,22 @@
             int j;
             
                 for(j = 0; j < 20; j++){
-                    sleep(1);
-                    printf("left\n");
+                    
+                    
                     pthread_mutex_lock(&mutex);
                     //sleep(10);
-                    if(sig == 0)
+                    if(sig == 0){                          
                         pthread_cond_wait(&conde, &mutex);
-                    else if (sig == 1){
-                        printf("woman_leaves()\n");
-                        woman_leaves();                        
-                    }else{              
-                        printf("man_leaves()\n");
+                    }else if (sig == 1){                          
+                        complete = j != 19 ? false : true;                          
+                        woman_leaves();
+                        printf("**Woman left**\n");
+                        
+                    }else{                                      
+                        complete = j != 19 ? false : true;                        
                         man_leaves();
+                        printf("**Man left**\n");
+                         
                     }
                         
                     pthread_cond_signal(&condl);
