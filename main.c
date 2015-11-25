@@ -180,7 +180,7 @@
             if(restroom_occupants > 0)
                 restroom_occupants--;
             
-            if( restroom_occupants == 0){
+            if( restroom_occupants == 0 ){
                 sig = 0;
                 check_queue();
             }
@@ -198,14 +198,14 @@
             if( restroom_occupants == 0 ){                
                 sig = 0;
                 check_queue();
-            } 
             
+            }  
                 
             
         }
 
         void add(int *array, int gender){
-
+            
             if((array)[0] == 'q'){
                 (array)[queue_pos] = gender; // 0 or 1
 
@@ -276,7 +276,7 @@
                 queue_pos++;
                 
             }while( queue[19] == next );
-            printf("sig %d", sig);
+            
         }
 
         void print_status(void){
@@ -317,10 +317,10 @@
                     
                     if(gender < 50){                        
                         man_wants_to_enter();
-                        printf("Man wants to enter\n");
-                    }else{                        
+                        
+                    } else {                        
                         woman_wants_to_enter();
-                        printf("Woman wants to enter\n");
+                        
                     }
                     pthread_cond_signal(&conde);
                                        
@@ -347,14 +347,14 @@
                     if(sig == 0){                          
                         pthread_cond_wait(&conde, &mutex);
                     }else if (sig == 1){                          
-                        complete = j != 19 ? false : true;                          
+                        //complete = j != 19 ? false : true;                          
                         woman_leaves();
-                        printf("**Woman left**\n");
+                        
                         
                     }else{                                      
-                        complete = j != 19 ? false : true;                        
+                        //complete = j != 19 ? false : true;                        
                         man_leaves();
-                        printf("**Man left**\n");
+                        
                          
                     }
                         
@@ -363,7 +363,7 @@
                     pthread_mutex_unlock(&mutex);
                 }
 
-            
+                complete = j != 20 ? false : true;                          
             
             pthread_exit(0);
 
